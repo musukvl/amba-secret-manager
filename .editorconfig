@@ -1,0 +1,18 @@
+﻿[*]
+max_line_length = 220
+
+[*.{xml,config,*proj,nuspec,props,resx,targets,yml,tasks}]
+indent_size = 2
+
+[*.json]
+indent_size = 2
+
+[*.{ps1,psm1}]
+indent_size = 2
+
+[*.sh]
+end_of_line = lf
+indent_size = 2
+
+[*.md]
+trim_trailing_whitespace = false 

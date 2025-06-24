@@ -13,6 +13,7 @@ using Spectre.Console.Cli;
 using System.ComponentModel;
 using System.Threading;
 using System.Threading.Tasks;
+using Amba.SecretManager.Commands;
 
 var app = new CommandApp();
 

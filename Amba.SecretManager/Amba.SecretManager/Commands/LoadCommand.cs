@@ -2,6 +2,8 @@
 using Spectre.Console;
 using Spectre.Console.Cli;
 
+namespace Amba.SecretManager.Commands;
+
 // ---------------- Settings ----------------
 class LoadSettings : CommandSettings
 {

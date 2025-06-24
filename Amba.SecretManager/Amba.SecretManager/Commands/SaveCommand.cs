@@ -2,6 +2,8 @@
 using Spectre.Console;
 using Spectre.Console.Cli;
 
+namespace Amba.SecretManager.Commands;
+
 class SaveSettings : CommandSettings
 {
     [Description("Skip approval prompt.")]

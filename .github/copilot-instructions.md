@@ -5,8 +5,19 @@ There are following terminology used:
 - secret files - .env files, all files placed into .secrets directory
 - profile - set of secret files and folders
 The cli tool has the following main functions:
-- save profile: traverse to all subfolders and searching .env files and .secrets folders. Copy the only secrets into user home folder. Keep folder structure of initial project.
-- load profile: creates .env files or .secrets folders with their content in the file structure.
+ 
+# Save function:
+The `save "my-app"` does following actions:
+Creates  ~/.secrets/my-app folder or clears it if it already exists.
+Traverses to all subfolders from the current directory and searches for .env files and .secrets folders.
+Copies found .env files and .secrets folders into ~/.secrets/my-app keeping the folder structure. 
+
+# Load function
+The `load "my-app"` does following actions:
+Copies all content with all subfolders from ~/.secrets/my-app folder into the current directory.
+By default `load` copies conetent overwrites existing files, but not affect other folders.
+`--overwrite` removes all content from `.secrets` folder before copying new content.
+
 
 # Coding instructions:
 - use the latest dotnet version 

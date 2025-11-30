@@ -18,7 +18,7 @@ class LoadSettings : CommandSettings
 
 sealed class LoadCommand : AsyncCommand<LoadSettings>
 {
-    public override Task<int> ExecuteAsync(CommandContext context, LoadSettings settings)
+    public override Task<int> ExecuteAsync(CommandContext context, LoadSettings settings, CancellationToken cancellationToken)
     {
         var dir = settings.Directory ?? Environment.CurrentDirectory;
         AnsiConsole.MarkupLine($"[yellow]Planning changes in[/] [aqua]{dir}[/]...");

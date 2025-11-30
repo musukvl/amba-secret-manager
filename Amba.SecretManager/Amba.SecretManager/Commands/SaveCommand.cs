@@ -14,7 +14,7 @@ class SaveSettings : CommandSettings
 
 sealed class SaveCommand : AsyncCommand<SaveSettings>
 {
-    public override Task<int> ExecuteAsync(CommandContext context, SaveSettings settings)
+    public override Task<int> ExecuteAsync(CommandContext context, SaveSettings settings, CancellationToken cancellationToken)
     {
         if (!settings.AutoApprove)
         {

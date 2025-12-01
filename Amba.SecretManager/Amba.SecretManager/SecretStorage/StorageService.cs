@@ -24,10 +24,15 @@ public class SecretStorageService
         }
 
         var storagePath = GetStoragePath(profile, string.Empty);
-        if (!Directory.Exists(storagePath))
+        
+        // Clear the storage path if it exists
+        if (Directory.Exists(storagePath))
         {
-            Directory.CreateDirectory(storagePath);
+            Directory.Delete(storagePath, true);
         }
+        
+        // Create the storage directory
+        Directory.CreateDirectory(storagePath);
 
         // Copy all .env files from the source path to the storage path
         foreach (var file in Directory.GetFiles(sourcePath, "*.env", SearchOption.AllDirectories))
@@ -60,7 +65,7 @@ public class SecretStorageService
     }
     
         // Copy all files from the source path to the storage path
-    public string LoadSecrets(string profile, string destinationPath)
+    public string LoadSecrets(string profile, string destinationPath, bool overwrite = false)
     {
         var storagePath = GetStoragePath(profile, string.Empty);
         if (!Directory.Exists(storagePath))
@@ -72,6 +77,15 @@ public class SecretStorageService
         if (destinationDir != null && !Directory.Exists(destinationDir))
         {
             Directory.CreateDirectory(destinationDir);
+        }
+
+        // If overwrite is true, remove all existing .secrets folders in the destination
+        if (overwrite)
+        {
+            foreach (var secretsDir in Directory.GetDirectories(destinationPath, ".secrets", SearchOption.AllDirectories))
+            {
+                Directory.Delete(secretsDir, true);
+            }
         }
 
         // Copy all files from the storage path to the destination path

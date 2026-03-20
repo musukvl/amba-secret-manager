@@ -1,93 +1,80 @@
-﻿namespace Amba.SecretManager.SecretStorage;
+namespace Amba.SecretManager.SecretStorage;
 
-public class SecretStorageService
+public class SecretStorageService(string storageRootDirectory)
 {
-    private readonly string _storageRootDirectory;
+    private static readonly string DefaultStorageRoot =
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".secret-profiles");
 
-    public SecretStorageService(string storageRootDirectory)
-    {
-        _storageRootDirectory = storageRootDirectory;
-    }
+    public SecretStorageService() : this(DefaultStorageRoot) { }
 
-
-    // returns the path in the storage directory
-    private string GetStoragePath(string profile, string path)
-    {
-        return Path.Combine(_storageRootDirectory, profile, path);
-    }
+    private string GetProfilePath(string profile) =>
+        Path.Combine(storageRootDirectory, profile);
 
     public void SaveSecrets(string profile, string sourcePath)
     {
         if (!Directory.Exists(sourcePath))
-        {
             throw new DirectoryNotFoundException($"Source path '{sourcePath}' does not exist.");
-        }
 
-        var storagePath = GetStoragePath(profile, string.Empty);
-        if (!Directory.Exists(storagePath))
-        {
-            Directory.CreateDirectory(storagePath);
-        }
+        var profilePath = GetProfilePath(profile);
 
-        // Copy all .env files from the source path to the storage path
+        // Clean replace: delete entire profile before writing
+        if (Directory.Exists(profilePath))
+            Directory.Delete(profilePath, true);
+
+        Directory.CreateDirectory(profilePath);
+
+        // Copy all *.env files
         foreach (var file in Directory.GetFiles(sourcePath, "*.env", SearchOption.AllDirectories))
         {
             var relativePath = Path.GetRelativePath(sourcePath, file);
-            var destFile = Path.Combine(storagePath, relativePath);
-            var destDir = Path.GetDirectoryName(destFile);
-            if (destDir != null && !Directory.Exists(destDir))
-            {
-                Directory.CreateDirectory(destDir);
-            }
+            var destFile = Path.Combine(profilePath, relativePath);
+            Directory.CreateDirectory(Path.GetDirectoryName(destFile)!);
             File.Copy(file, destFile, true);
         }
-        // copy all .secrets directories from the source path to the storage path
+
+        // Copy all .secrets directories recursively
         foreach (var dir in Directory.GetDirectories(sourcePath, ".secrets", SearchOption.AllDirectories))
         {
             var relativePath = Path.GetRelativePath(sourcePath, dir);
-            var destDir = Path.Combine(storagePath, relativePath);
-            if (!Directory.Exists(destDir))
+            var destDir = Path.Combine(profilePath, relativePath);
+
+            foreach (var file in Directory.GetFiles(dir, "*", SearchOption.AllDirectories))
             {
-                Directory.CreateDirectory(destDir);
-            }
-            // Copy all files in the .secrets directory
-            foreach (var file in Directory.GetFiles(dir))
-            {
-                var destFile = Path.Combine(destDir, Path.GetFileName(file));
+                var fileRelative = Path.GetRelativePath(sourcePath, file);
+                var destFile = Path.Combine(profilePath, fileRelative);
+                Directory.CreateDirectory(Path.GetDirectoryName(destFile)!);
                 File.Copy(file, destFile, true);
             }
         }
     }
-    
-        // Copy all files from the source path to the storage path
-    public string LoadSecrets(string profile, string destinationPath)
+
+    public void LoadSecrets(string profile, string destinationPath)
     {
-        var storagePath = GetStoragePath(profile, string.Empty);
-        if (!Directory.Exists(storagePath))
-        {
-            throw new DirectoryNotFoundException($"Storage path '{storagePath}' does not exist.");
-        }
+        var profilePath = GetProfilePath(profile);
+        if (!Directory.Exists(profilePath))
+            throw new DirectoryNotFoundException("Profile not found");
 
-        var destinationDir = Path.GetDirectoryName(destinationPath);
-        if (destinationDir != null && !Directory.Exists(destinationDir))
+        foreach (var file in Directory.GetFiles(profilePath, "*", SearchOption.AllDirectories))
         {
-            Directory.CreateDirectory(destinationDir);
-        }
-
-        // Copy all files from the storage path to the destination path
-        foreach (var file in Directory.GetFiles(storagePath, "*", SearchOption.AllDirectories))
-        {
-            var relativePath = Path.GetRelativePath(storagePath, file);
+            var relativePath = Path.GetRelativePath(profilePath, file);
             var destFile = Path.Combine(destinationPath, relativePath);
-            var destDir = Path.GetDirectoryName(destFile);
-            if (destDir != null && !Directory.Exists(destDir))
-            {
-                Directory.CreateDirectory(destDir);
-            }
+            Directory.CreateDirectory(Path.GetDirectoryName(destFile)!);
             File.Copy(file, destFile, true);
         }
- 
-        return destinationPath;
-    }     
-    
+    }
+
+    public bool ProfileExists(string profile) =>
+        Directory.Exists(GetProfilePath(profile));
+
+    public IEnumerable<string> ListProfiles()
+    {
+        if (!Directory.Exists(storageRootDirectory))
+            return [];
+
+        return Directory.GetDirectories(storageRootDirectory)
+            .Select(Path.GetFileName)
+            .Where(name => name is not null)
+            .Cast<string>()
+            .Order();
+    }
 }

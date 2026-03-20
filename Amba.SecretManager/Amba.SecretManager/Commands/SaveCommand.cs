@@ -1,41 +1,28 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Amba.SecretManager.SecretStorage;
 
 namespace Amba.SecretManager.Commands;
 
 class SaveSettings : CommandSettings
 {
-    [Description("Skip approval prompt.")]
-    [CommandOption("--auto-approve")]
-    public bool AutoApprove { get; init; }
+    [Description("Profile name (defaults to current directory name).")]
+    [CommandArgument(0, "[profile-name]")]
+    public string? ProfileName { get; init; }
 }
 
-
-sealed class SaveCommand : AsyncCommand<SaveSettings>
+sealed class SaveCommand : Command<SaveSettings>
 {
-    public override Task<int> ExecuteAsync(CommandContext context, SaveSettings settings, CancellationToken cancellationToken)
+    public override int Execute(CommandContext context, SaveSettings settings, CancellationToken cancellationToken)
     {
-        if (!settings.AutoApprove)
-        {
-            if (!AnsiConsole.Confirm("Do you want to perform these actions?"))
-            {
-                AnsiConsole.MarkupLine("[yellow]Apply cancelled.[/]");
-                return Task.FromResult(1);
-            }
-        }
+        var sourcePath = Environment.CurrentDirectory;
+        var profileName = settings.ProfileName ?? new DirectoryInfo(sourcePath).Name;
 
-        // Simulate apply
-        AnsiConsole.Status()
-            .Start("Saving changes…", ctx =>
-            {
-                ctx.Status("Creating resources…");
-                Thread.Sleep(1200);
-                ctx.Status("Destroying resources…");
-                Thread.Sleep(700);
-            });
+        var service = new SecretStorageService();
+        service.SaveSecrets(profileName, sourcePath);
 
-        AnsiConsole.MarkupLine("[bold green]Apply complete! Resources: 1 added, 0 changed, 1 destroyed.[/]");
-        return Task.FromResult(0);
+        AnsiConsole.MarkupLine($"[green]Saved secrets to profile '{profileName}'.[/]");
+        return 0;
     }
 }

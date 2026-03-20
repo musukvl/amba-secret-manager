@@ -1,31 +1,20 @@
-﻿// Program.cs - Minimal Spectre.Console.Cli app with `plan` and `apply` commands
-// --------------------------------------------------------------
-// Build: dotnet build
-// Run:   dotnet run -- plan [directory] [--json]
-//        dotnet run -- apply [--auto-approve]
-//
-// NuGet packages (see .csproj):
-//   <PackageReference Include="Spectre.Console" Version="0.50.0" />
-//   <PackageReference Include="Spectre.Console.Cli" Version="0.50.0" />
-// --------------------------------------------------------------
-
 using Spectre.Console.Cli;
-using System.ComponentModel;
-using System.Threading;
-using System.Threading.Tasks;
 using Amba.SecretManager.Commands;
 
 var app = new CommandApp();
 
 app.Configure(config =>
 {
-    config.SetApplicationName("tfclone");
-
-    config.AddCommand<LoadCommand>("load")
-          .WithDescription("Generate and show an execution plan");
+    config.SetApplicationName("sm");
 
     config.AddCommand<SaveCommand>("save")
-          .WithDescription("Apply the changes required to reach desired state");
+          .WithDescription("Save secret files to a profile");
+
+    config.AddCommand<LoadCommand>("load")
+          .WithDescription("Load secret files from a profile");
+
+    config.AddCommand<ListCommand>("list")
+          .WithDescription("List all saved profiles");
 });
 
-return await app.RunAsync(args);
+return app.Run(args);

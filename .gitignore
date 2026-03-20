@@ -55,3 +55,8 @@ nunit-*.xml
 
 *.DotSettings.user
 .idea/
+.vscode/
+.claude/
+
+# Temporary directories
+*.tmp/

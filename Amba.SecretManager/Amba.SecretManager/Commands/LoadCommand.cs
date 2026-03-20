@@ -1,41 +1,35 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using Amba.SecretManager.SecretStorage;
 
 namespace Amba.SecretManager.Commands;
 
-// ---------------- Settings ----------------
 class LoadSettings : CommandSettings
 {
-    [Description("Path to the working directory (default: current directory).")]
-    [CommandArgument(0, "[directory]")]
-    public string? Directory { get; init; }
-
-    [Description("Print plan in JSON format.")]
-    [CommandOption("--json")]
-    public bool Json { get; init; }
+    [Description("Profile name (defaults to current directory name).")]
+    [CommandArgument(0, "[profile-name]")]
+    public string? ProfileName { get; init; }
 }
 
-sealed class LoadCommand : AsyncCommand<LoadSettings>
+sealed class LoadCommand : Command<LoadSettings>
 {
-    public override Task<int> ExecuteAsync(CommandContext context, LoadSettings settings, CancellationToken cancellationToken)
+    public override int Execute(CommandContext context, LoadSettings settings, CancellationToken cancellationToken)
     {
-        var dir = settings.Directory ?? Environment.CurrentDirectory;
-        AnsiConsole.MarkupLine($"[yellow]Planning changes in[/] [aqua]{dir}[/]...");
+        var destinationPath = Environment.CurrentDirectory;
+        var profileName = settings.ProfileName ?? new DirectoryInfo(destinationPath).Name;
 
-        // Simulate work
-        AnsiConsole.Status()
-            .Start("Evaluating infrastructure…", ctx =>
-            {
-                Thread.Sleep(800);
-            });
+        var service = new SecretStorageService();
 
-        // Fake diff output
-        AnsiConsole.Write(new Rule("[bold]Execution plan[/]").Centered());
-        AnsiConsole.MarkupLine("[green]+ create[/] resource \"example\" \"app\"");
-        AnsiConsole.MarkupLine("[red]- destroy[/] resource \"example\" \"db\"");
+        if (!service.ProfileExists(profileName))
+        {
+            AnsiConsole.MarkupLine($"[red]Profile not found[/]");
+            return 1;
+        }
 
-        AnsiConsole.MarkupLine("\n[bold green]Plan: 1 to add, 0 to change, 1 to destroy[/]");
-        return Task.FromResult(0);
+        service.LoadSecrets(profileName, destinationPath);
+
+        AnsiConsole.MarkupLine($"[green]Loaded secrets from profile '{profileName}'.[/]");
+        return 0;
     }
 }
